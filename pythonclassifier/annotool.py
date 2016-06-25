@@ -1,11 +1,14 @@
-from bottle import route, run, template
+from bottle import request, route, run, template
+import json
 
-@route('/')
-def nodata():
-    return "No data provided."
+@route('/', method='POST')
+def train():
 
-@route('/<data>')
-def train(data=90210):
-    return 2*data
+	data = request.json
+	# data = '["foo", {"bar":["baz", null, 1.0, 2]}]'
+
+	print data[0]["foo"]
+
+	return 5*data[0]["foo"]
 
 run(host='localhost', port=8080, debug=True)
