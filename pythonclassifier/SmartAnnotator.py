@@ -5,8 +5,8 @@ import multiprocessing as mp
 import itertools
 import cv2
 import ImageFeature as If
-import ttk
-from Tkinter import *
+# import ttk
+# from Tkinter import *
 from PIL import Image, ImageTk, ImageDraw
 from sklearn import ensemble, utils
 from scipy import misc, ndimage
@@ -53,93 +53,93 @@ class SmartAnnotator(object):
         self.current_idx = 1
 
         # create the window
-        self.root = Tk()
-        self.root.title("SmartAnnotator")
-        self.root.geometry('512x555')
+        # self.root = Tk()
+        # self.root.title("SmartAnnotator")
+        # self.root.geometry('512x555')
 
-        self.root.bind("<Left>", self._on_left)
-        self.root.bind("<Right>", self._on_right)
+        # self.root.bind("<Left>", self._on_left)
+        # self.root.bind("<Right>", self._on_right)
 
         # create the refiner
-        self.refiner = Ref.Refiner(self.root, self)
-        self.refiner.withdraw()
+        # self.refiner = Ref.Refiner(self.root, self)
+        # self.refiner.withdraw()
 
         # take a random image for the mser setting tab
         mser_image = self.get_image_from_idx(random.randint(1, num_frames-1))
 
         # create the settings window
-        self.settings = Sw.SettingWindow(self.root, MAX_NUM_FEATURES, self.num_frames, mser_image)
-        self.settings.withdraw()
+        # self.settings = Sw.SettingWindow(self.root, MAX_NUM_FEATURES, self.num_frames, mser_image)
+        # self.settings.withdraw()
 
         # buttons
-        button_paned_window = PanedWindow(orient=HORIZONTAL)
-        button_paned_window.grid(row=0, column=0)
+        # button_paned_window = PanedWindow(orient=HORIZONTAL)
+        # button_paned_window.grid(row=0, column=0)
 
-        self.settings_icon = ImageTk.PhotoImage(Image.open("icons/settings.png"))
-        self.settings_button = Button(self.root, image=self.settings_icon, command=self.settings.deiconify)
-        button_paned_window.add(self.settings_button)
+        # self.settings_icon = ImageTk.PhotoImage(Image.open("icons/settings.png"))
+        # self.settings_button = Button(self.root, image=self.settings_icon, command=self.settings.deiconify)
+        # button_paned_window.add(self.settings_button)
 
-        self.combobox_value = StringVar()
-        combobox = ttk.Combobox(self.root, textvariable=self.combobox_value,
-                                state='readonly', width=4)
-        list_channels = list()
-        for i in range(1, num_channels + 1):
-            list_channels.append('ch' + str(i))
-        list_values = ['RGB'] + list_channels
-        combobox['values'] = tuple(list_values)
-        combobox.current(0)
-        combobox.bind("<<ComboboxSelected>>", self._new_combobox_selection)
-        button_paned_window.add(combobox)
+        # self.combobox_value = StringVar()
+        # combobox = ttk.Combobox(self.root, textvariable=self.combobox_value,
+        #                         state='readonly', width=4)
+        # list_channels = list()
+        # for i in range(1, num_channels + 1):
+        #     list_channels.append('ch' + str(i))
+        # list_values = ['RGB'] + list_channels
+        # combobox['values'] = tuple(list_values)
+        # combobox.current(0)
+        # combobox.bind("<<ComboboxSelected>>", self._new_combobox_selection)
+        # button_paned_window.add(combobox)
 
-        train_forest_button = Button(self.root, text="Train", command=self.train_command)
-        button_paned_window.add(train_forest_button)
+        # train_forest_button = Button(self.root, text="Train", command=self.train_command)
+        # button_paned_window.add(train_forest_button)
 
-        test_forest_button = Button(self.root, text="Test", command=self.test_command)
-        button_paned_window.add(test_forest_button)
+        # test_forest_button = Button(self.root, text="Test", command=self.test_command)
+        # button_paned_window.add(test_forest_button)
 
         # add the confidence slider
-        self.slider = Scale(self.root, from_=0.0, to=1, resolution=0.01, orient=HORIZONTAL)
-        self.slider.set(0.7)
-        self.slider.bind("<ButtonRelease-1>", self.slider_command)
-        button_paned_window.add(self.slider)
+        # self.slider = Scale(self.root, from_=0.0, to=1, resolution=0.01, orient=HORIZONTAL)
+        # self.slider.set(0.7)
+        # self.slider.bind("<ButtonRelease-1>", self.slider_command)
+        # button_paned_window.add(self.slider)
 
-        self.overlay_button = IntVar()
-        check_button = Checkbutton(self.root, text="", variable=self.overlay_button, command=self.overlay)
-        button_paned_window.add(check_button)
+        # self.overlay_button = IntVar()
+        # check_button = Checkbutton(self.root, text="", variable=self.overlay_button, command=self.overlay)
+        # button_paned_window.add(check_button)
 
-        refine_button = Button(self.root, text="Refine!", command=self.refine_command)
-        button_paned_window.add(refine_button)
+        # refine_button = Button(self.root, text="Refine!", command=self.refine_command)
+        # button_paned_window.add(refine_button)
 
-        left_button = Button(self.root, text="<", command=self.left_command)
-        button_paned_window.add(left_button)
+        # left_button = Button(self.root, text="<", command=self.left_command)
+        # button_paned_window.add(left_button)
 
-        right_button = Button(self.root, text=">", command=self.right_command)
-        button_paned_window.add(right_button)
+        # right_button = Button(self.root, text=">", command=self.right_command)
+        # button_paned_window.add(right_button)
 
-        self.current_idx_entry = Entry(self.root, width=5, justify=RIGHT)
-        self.current_idx_entry.bind("<Return>", self._return_on_entry)
-        self.current_idx_entry.bind("<ButtonRelease-1>", self._focus_on_entry)
-        self.current_idx_entry.insert(END, str(self.current_idx))
-        button_paned_window.add(self.current_idx_entry)
+        # self.current_idx_entry = Entry(self.root, width=5, justify=RIGHT)
+        # self.current_idx_entry.bind("<Return>", self._return_on_entry)
+        # self.current_idx_entry.bind("<ButtonRelease-1>", self._focus_on_entry)
+        # self.current_idx_entry.insert(END, str(self.current_idx))
+        # button_paned_window.add(self.current_idx_entry)
 
-        num_frames_label = Label(self.root, text='/' + str(self.num_frames))
-        button_paned_window.add(num_frames_label)
+        # num_frames_label = Label(self.root, text='/' + str(self.num_frames))
+        # button_paned_window.add(num_frames_label)
 
-        track_button = Button(self.root, text="Track", command=self.track_command)
-        button_paned_window.add(track_button)
+        # track_button = Button(self.root, text="Track", command=self.track_command)
+        # button_paned_window.add(track_button)
 
         # image label
         self.imgArray = self.get_image_from_idx(self.current_idx)
         self.current_image = Image.fromarray(self.imgArray)
-        self.img = ImageTk.PhotoImage(self.current_image)
+        # self.img = ImageTk.PhotoImage(self.current_image)
 
-        img_label = Label(self.root, image=self.img)
-        img_label.grid(row=1, column=0)
+        # img_label = Label(self.root, image=self.img)
+        # img_label.grid(row=1, column=0)
 
         # bind the click actions to the image label
-        img_label.bind("<Button 1>", self.add_positive_sample)
-        img_label.bind("<Button 2>", self.add_bunch_negative_samples)
-        img_label.bind("<Button 3>", self.add_negative_sample_event)
+        # img_label.bind("<Button 1>", self.add_positive_sample)
+        # img_label.bind("<Button 2>", self.add_bunch_negative_samples)
+        # img_label.bind("<Button 3>", self.add_negative_sample_event)
 
         # create the feature object and initialize it
         self.image_feature = If.ImageFeature(self.settings.get_patch_size())
@@ -157,11 +157,11 @@ class SmartAnnotator(object):
     # ADD X AND Y HERE INSTEAD OF EVENT /////////////////////////////
     def add_positive_sample(self, event):
         # if in overlay mode discard
-        if self.overlay_button.get():
-            return
+        # if self.overlay_button.get():
+        #     return
 
         # disable feature tab in settings window
-        self.settings.notebook.tab(0, state='disabled')
+        # self.settings.notebook.tab(0, state='disabled')
 
         # calculate the center of mass
         x, y = self.get_center_of_mass(event.x, event.y, self.settings.get_patch_size())
@@ -180,9 +180,9 @@ class SmartAnnotator(object):
         p0, p1, p2, p3 = get_coordinates(x, y, self.settings.get_patch_size())
 
         # draw red rectangle
-        draw = ImageDraw.Draw(self.current_image)
-        draw.rectangle([(p0, p1), (p2, p3)], outline="red")
-        self.img.paste(self.current_image)
+        # draw = ImageDraw.Draw(self.current_image)
+        # draw.rectangle([(p0, p1), (p2, p3)], outline="red")
+        # self.img.paste(self.current_image)
 
         # add extended patch to the occupied grid
         extended_patch = get_patch_coordinates(x, y, self.settings.get_patch_size()*2)
@@ -216,9 +216,9 @@ class SmartAnnotator(object):
             self.negative_dataset.append(feats)
 
         # draw blue rectangle
-        draw = ImageDraw.Draw(self.current_image)
-        draw.rectangle([patch[0], patch[-1]], outline="blue")
-        self.img.paste(self.current_image)
+        # draw = ImageDraw.Draw(self.current_image)
+        # draw.rectangle([patch[0], patch[-1]], outline="blue")
+        # self.img.paste(self.current_image)
 
     def add_bunch_negative_samples(self, event):
         num_neg = len(self.positive_dataset)*2
@@ -231,50 +231,50 @@ class SmartAnnotator(object):
 
             self.add_negative_sample(randX, randY)
 
-    def left_command(self):
-        self.current_idx -= 1
-        self.imgArray = self.get_image_from_idx(self.current_idx)
-        self.current_idx_entry.delete(0, END)
-        self.current_idx_entry.insert(END, self.current_idx)
+    # def left_command(self):
+    #     self.current_idx -= 1
+    #     self.imgArray = self.get_image_from_idx(self.current_idx)
+    #     self.current_idx_entry.delete(0, END)
+    #     self.current_idx_entry.insert(END, self.current_idx)
 
-        # the features have changed
-        self.updated = False
+    #     # the features have changed
+    #     self.updated = False
 
-        # update the frame
-        self.current_image = Image.fromarray(self.select_channel(self.imgArray))
-        self.img.paste(self.current_image)
+    #     # update the frame
+    #     self.current_image = Image.fromarray(self.select_channel(self.imgArray))
+    #     self.img.paste(self.current_image)
 
-        if self.res_minus is not None:
-            idx, dots, self.probabilities, dictionary = self.res_minus.get()
-            self.image_feature.merge_dictionaries(dictionary)
-            self.already_tested[idx] = dots
-            self._test_previous_frame()
+    #     if self.res_minus is not None:
+    #         idx, dots, self.probabilities, dictionary = self.res_minus.get()
+    #         self.image_feature.merge_dictionaries(dictionary)
+    #         self.already_tested[idx] = dots
+    #         self._test_previous_frame()
 
-        dots = self.already_tested[self.current_idx]
-        if len(dots) > 0:
-            self.show_crosses(dots, self.slider.get())
+    #     dots = self.already_tested[self.current_idx]
+    #     if len(dots) > 0:
+    #         self.show_crosses(dots, self.slider.get())
 
-    def right_command(self):
-        self.current_idx += 1
-        self.imgArray = self.get_image_from_idx(self.current_idx)
-        self.current_idx_entry.delete(0, END)
-        self.current_idx_entry.insert(END, self.current_idx)
+    # def right_command(self):
+    #     self.current_idx += 1
+    #     self.imgArray = self.get_image_from_idx(self.current_idx)
+    #     self.current_idx_entry.delete(0, END)
+    #     self.current_idx_entry.insert(END, self.current_idx)
 
-        self.updated = False
+    #     self.updated = False
 
-        # update the frame
-        self.current_image = Image.fromarray(self.select_channel(self.imgArray))
-        self.img.paste(self.current_image)
+    #     # update the frame
+    #     self.current_image = Image.fromarray(self.select_channel(self.imgArray))
+    #     self.img.paste(self.current_image)
 
-        if self.res_plus is not None:
-            idx, dots, self.probabilities, dictionary = self.res_plus.get()
-            self.image_feature.merge_dictionaries(dictionary)
-            self.already_tested[idx] = dots
-            self._test_next_frame()
+    #     if self.res_plus is not None:
+    #         idx, dots, self.probabilities, dictionary = self.res_plus.get()
+    #         self.image_feature.merge_dictionaries(dictionary)
+    #         self.already_tested[idx] = dots
+    #         self._test_next_frame()
 
-        dots = self.already_tested[self.current_idx]
-        if len(dots) > 0:
-            self.show_crosses(dots, self.slider.get())
+    #     dots = self.already_tested[self.current_idx]
+    #     if len(dots) > 0:
+    #         self.show_crosses(dots, self.slider.get())
 
     def train_command(self):
         # remove previously founded dots
@@ -307,7 +307,7 @@ class SmartAnnotator(object):
         # if already tested show the dots and abort
         dots = self.already_tested[self.current_idx]
         if len(dots) > 0:
-            self.show_crosses(dots, self.slider.get())
+            # self.show_crosses(dots, self.slider.get())///////////////REPLACE THIS WITH DOT PRINT ITERATOR
             return
 
         # check if features have been updated
@@ -342,7 +342,7 @@ class SmartAnnotator(object):
         self.already_tested[index] = dots
 
         # show the crosses
-        self.show_crosses(dots, self.slider.get())
+        # self.show_crosses(dots, self.slider.get())
 
         # update flag
         self.has_been_tested = True
@@ -383,8 +383,8 @@ class SmartAnnotator(object):
 
     def slider_command(self, event):
         dots = self.already_tested[self.current_idx]
-        if len(dots) > 0:
-            self.show_crosses(dots, self.slider.get())
+        # if len(dots) > 0:
+            # self.show_crosses(dots, self.slider.get())
 
     def _return_on_entry(self, event):
         entry_current_text = self.current_idx_entry.get()
@@ -497,43 +497,43 @@ class SmartAnnotator(object):
         else:
             self.overlay_button.set(0)
 
-    def show_crosses(self, dots, threshold):
-        # blank the image
-        self.current_image = Image.fromarray(self.select_channel(self.imgArray))
-        self.img.paste(self.current_image)
+    # def show_crosses(self, dots, threshold):
+    #     # blank the image
+    #     self.current_image = Image.fromarray(self.select_channel(self.imgArray))
+    #     self.img.paste(self.current_image)
 
-        # iterate over the dots
-        for dot in dots:
-            # display only dots with probability larger than threshold
-            if dot.probability < threshold:
-                continue
+    #     # iterate over the dots
+    #     for dot in dots:
+    #         # display only dots with probability larger than threshold
+    #         if dot.probability < threshold:
+    #             continue
 
-            # HERE ARE THE RETURNED POINTS, IN DOT ///////////////////////////////
-            x, y = dot.x, dot.y
-            p0, p1, p2, p3 = get_coordinates(x, y, 4)
+    #         # HERE ARE THE RETURNED POINTS, IN DOT ///////////////////////////////
+    #         x, y = dot.x, dot.y
+    #         p0, p1, p2, p3 = get_coordinates(x, y, 4)
 
-            # display a yellow cross over the dot
-            draw = ImageDraw.Draw(self.current_image)
-            draw.line([(p0, p1), (p2, p3)], fill="yellow")
-            draw.line([(p2, p1), (p0, p3)], fill="yellow")
+    #         # display a yellow cross over the dot
+    #         draw = ImageDraw.Draw(self.current_image)
+    #         draw.line([(p0, p1), (p2, p3)], fill="yellow")
+    #         draw.line([(p2, p1), (p0, p3)], fill="yellow")
 
-        self.img.paste(self.current_image)
+    #     self.img.paste(self.current_image)
 
     # method used by Refiner to display current point on the image
-    def display_point(self, point, index):
-        self.imgArray = self.get_image_from_idx(index)
-        self.current_image = Image.fromarray(self.imgArray)
-        self.img.paste(self.current_image)
+    # def display_point(self, point, index):
+    #     self.imgArray = self.get_image_from_idx(index)
+    #     self.current_image = Image.fromarray(self.imgArray)
+    #     self.img.paste(self.current_image)
 
-        # updates current index info
-        self.current_idx = index
-        self.current_idx_entry.delete(0, END)
-        self.current_idx_entry.insert(END, self.current_idx)
+    #     # updates current index info
+    #     self.current_idx = index
+    #     self.current_idx_entry.delete(0, END)
+    #     self.current_idx_entry.insert(END, self.current_idx)
 
-        p0, p1, p2, p3 = get_coordinates(point[1], point[0], self.settings.get_patch_size())
-        draw = ImageDraw.Draw(self.current_image)
-        draw.rectangle([(p0, p1), (p2, p3)], outline="white")
-        self.img.paste(self.current_image)
+    #     p0, p1, p2, p3 = get_coordinates(point[1], point[0], self.settings.get_patch_size())
+    #     draw = ImageDraw.Draw(self.current_image)
+    #     draw.rectangle([(p0, p1), (p2, p3)], outline="white")
+    #     self.img.paste(self.current_image)
 
     # method used by Refiner to update the datasets
     def update_datasets(self, pos_dataset, neg_dataset):
