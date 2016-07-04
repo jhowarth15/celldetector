@@ -5,8 +5,8 @@ import multiprocessing as mp
 import itertools
 import cv2
 import ImageFeature as If
-# import ttk
-# from Tkinter import *
+#import ttk
+#from Tkinter import *
 from PIL import Image, ImageTk, ImageDraw
 from sklearn import ensemble, utils
 from scipy import misc, ndimage
@@ -25,9 +25,14 @@ MAX_NUM_FEATURES = 24
 
 
 class SmartAnnotator(object):
+
     def __init__(self, folder_path, num_frames, num_channels):
+        self.dots = None
+
         self.folder_path = folder_path
         self.num_frames = num_frames
+
+        self.combobox_value = "RGB" #INPUT channel here///////////////////////
 
         # initialize the list of list of dots for already tested frames
         self.already_tested = [[] for i in range(num_frames + 1)]
@@ -60,7 +65,7 @@ class SmartAnnotator(object):
         # self.root.bind("<Left>", self._on_left)
         # self.root.bind("<Right>", self._on_right)
 
-        # create the refiner
+        # # create the refiner
         # self.refiner = Ref.Refiner(self.root, self)
         # self.refiner.withdraw()
 
@@ -68,7 +73,7 @@ class SmartAnnotator(object):
         mser_image = self.get_image_from_idx(random.randint(1, num_frames-1))
 
         # create the settings window
-        # self.settings = Sw.SettingWindow(self.root, MAX_NUM_FEATURES, self.num_frames, mser_image)
+        self.settings = Sw.SettingWindow(MAX_NUM_FEATURES, self.num_frames, mser_image)
         # self.settings.withdraw()
 
         # buttons
@@ -98,7 +103,7 @@ class SmartAnnotator(object):
         # button_paned_window.add(test_forest_button)
 
         # add the confidence slider
-        # self.slider = Scale(self.root, from_=0.0, to=1, resolution=0.01, orient=HORIZONTAL)
+        self.slider = 0.7 #Scale(self.root, from_=0.0, to=1, resolution=0.01, orient=HORIZONTAL)
         # self.slider.set(0.7)
         # self.slider.bind("<ButtonRelease-1>", self.slider_command)
         # button_paned_window.add(self.slider)
@@ -152,10 +157,20 @@ class SmartAnnotator(object):
         self.updated = False
         self.has_been_tested = False
 
-        self.root.mainloop()
+        # self.root.mainloop()
 
-    # ADD X AND Y HERE INSTEAD OF EVENT /////////////////////////////
-    def add_positive_sample(self, event):
+
+
+
+
+
+
+
+    def add_positive_sample(self, xp, yp):
+        #COMPENSATE FOR FIJI COORD DIFFERENCE - figure out more accurately
+        xp = xp# - 15
+        yp = yp# - 50
+
         # if in overlay mode discard
         # if self.overlay_button.get():
         #     return
@@ -164,7 +179,7 @@ class SmartAnnotator(object):
         # self.settings.notebook.tab(0, state='disabled')
 
         # calculate the center of mass
-        x, y = self.get_center_of_mass(event.x, event.y, self.settings.get_patch_size())
+        x, y = self.get_center_of_mass(xp, yp, self.settings.get_patch_size())
 
         # check if features have been updated
         if not self.updated:
@@ -189,15 +204,12 @@ class SmartAnnotator(object):
         for i in extended_patch:
             self.occupied_grid[i[1], i[0]] = True
 
-    def add_negative_sample_event(self, event):
-        x = event.x
-        y = event.y
-
+    def add_negative_sample_event(self, x, y):
         self.add_negative_sample(x, y)
 
     def add_negative_sample(self, x, y):
         # disable feature tab in setting window
-        self.settings.notebook.tab(0, state='disabled')
+        # self.settings.notebook.tab(0, state='disabled')
 
         # calculate patch coordinates
         patch = get_patch_coordinates(x, y, self.settings.get_patch_size())
@@ -213,6 +225,9 @@ class SmartAnnotator(object):
         for point in points:
             # get features from point and append it to negative dataset
             feats = self.image_feature.extractFeatsFromPoint((point[1], point[0]), self.settings.get_selection_mask())
+            print "Patch point features: "
+            print '[%s]' % ', '.join(map(str, feats))
+            #print "Here: ", feats[0]
             self.negative_dataset.append(feats)
 
         # draw blue rectangle
@@ -286,6 +301,17 @@ class SmartAnnotator(object):
         self.res_plus = None
         self.res_minus = None
 
+        #ADD ANNOTATIONS//////////////////////////////////////////////////////////////////
+        self.add_positive_sample(122,122)#fiji(147, 174)
+        self.add_positive_sample(445, 308)#fiji(450, 354)
+        self.add_positive_sample(241,292)#fiji(244, 345)
+
+        self.add_negative_sample(20, 20)
+        self.add_negative_sample(20, 60)
+
+
+        #/////////////////////////////////////////////////////////////////////////////////
+
         # merge the two datasets and create X and y
         X, y = merge_datasets(self.positive_dataset, self.negative_dataset)
 
@@ -293,7 +319,7 @@ class SmartAnnotator(object):
         # disable corresponding frame
         forest_opts = self.settings.get_forest_opts()
         self.clf = ensemble.RandomForestClassifier(forest_opts[0], max_depth=forest_opts[1], max_features=forest_opts[2])
-        self.settings.notebook.tab(1, state='disabled')
+        # self.settings.notebook.tab(1, state='disabled')
 
         print(self.clf)
 
@@ -303,11 +329,13 @@ class SmartAnnotator(object):
         print "Model trained. Feature importances:"
         print(self.clf.feature_importances_)
 
+
+
     def test_command(self):
         # if already tested show the dots and abort
-        dots = self.already_tested[self.current_idx]
-        if len(dots) > 0:
-            # self.show_crosses(dots, self.slider.get())///////////////REPLACE THIS WITH DOT PRINT ITERATOR
+        self.dots = self.already_tested[self.current_idx]
+        if len(self.dots) > 0:
+            self.output_crosses(dots, self.slider)
             return
 
         # check if features have been updated
@@ -332,24 +360,26 @@ class SmartAnnotator(object):
             self.train_command()
 
         # test the frame
-        index, dots, self.probabilities, dictionary = test_frame(self.current_idx, self.imgArray,
+        index, self.dots, self.probabilities, dictionary = test_frame(self.current_idx, self.imgArray,
                                                                  self.image_feature, True, self.settings.get_mser_opts(), self.clf,
                                                                  self.settings.get_selection_mask(),
                                                                  self.settings.get_dots_distance())
         self.image_feature.merge_dictionaries(dictionary)
 
         # save the dots
-        self.already_tested[index] = dots
+        self.already_tested[index] = self.dots
 
         # show the crosses
-        # self.show_crosses(dots, self.slider.get())
+        # self.output_crosses(self.dots, self.slider)
+        #self.show_crosses(dots, self.slider)
 
         # update flag
         self.has_been_tested = True
 
         # start async calls to test function for next and previous frame
-        self._test_next_frame()
-        self._test_previous_frame()
+        # self._test_next_frame()
+        # self._test_previous_frame()
+
 
     def _test_next_frame(self):
         index = self.current_idx + 1
@@ -358,8 +388,8 @@ class SmartAnnotator(object):
             return
 
         # check if not been tested before and not retrained
-        dots = self.already_tested[index]
-        if len(dots) == 0:
+        self.dots = self.already_tested[index]
+        if len(self.dots) == 0:
             image_array = self.get_image_from_idx(index)
             self.res_plus = self.pool.apply_async(test_frame, args=(index, image_array,
                                                                     self.image_feature, True, self.settings.get_mser_opts(), self.clf,
@@ -373,8 +403,8 @@ class SmartAnnotator(object):
             return
 
         # check if not been tested before and not retrained
-        dots = self.already_tested[index]
-        if len(dots) == 0:
+        self.dots = self.already_tested[index]
+        if len(self.dots) == 0:
             image_array = self.get_image_from_idx(index)
             self.res_minus = self.pool.apply_async(test_frame, args=(index, image_array,
                                                                      self.image_feature, True, self.settings.get_mser_opts(), self.clf,
@@ -382,9 +412,9 @@ class SmartAnnotator(object):
                                                                      self.settings.get_dots_distance()))
 
     def slider_command(self, event):
-        dots = self.already_tested[self.current_idx]
-        # if len(dots) > 0:
-            # self.show_crosses(dots, self.slider.get())
+        self.dots = self.already_tested[self.current_idx]
+        if len(self.dots) > 0:
+            self.show_crosses(self.dots, self.slider.get())
 
     def _return_on_entry(self, event):
         entry_current_text = self.current_idx_entry.get()
@@ -497,43 +527,58 @@ class SmartAnnotator(object):
         else:
             self.overlay_button.set(0)
 
-    # def show_crosses(self, dots, threshold):
-    #     # blank the image
-    #     self.current_image = Image.fromarray(self.select_channel(self.imgArray))
-    #     self.img.paste(self.current_image)
+    def show_crosses(self, dots, threshold):
+        # blank the image
+        self.current_image = Image.fromarray(self.select_channel(self.imgArray))
+        self.img.paste(self.current_image)
 
-    #     # iterate over the dots
-    #     for dot in dots:
-    #         # display only dots with probability larger than threshold
-    #         if dot.probability < threshold:
-    #             continue
+        # iterate over the dots
+        for dot in dots:
+            # display only dots with probability larger than threshold
+            if dot.probability < threshold:
+                continue
 
-    #         # HERE ARE THE RETURNED POINTS, IN DOT ///////////////////////////////
-    #         x, y = dot.x, dot.y
-    #         p0, p1, p2, p3 = get_coordinates(x, y, 4)
+            x, y = dot.x, dot.y
+            p0, p1, p2, p3 = get_coordinates(x, y, 4)
 
-    #         # display a yellow cross over the dot
-    #         draw = ImageDraw.Draw(self.current_image)
-    #         draw.line([(p0, p1), (p2, p3)], fill="yellow")
-    #         draw.line([(p2, p1), (p0, p3)], fill="yellow")
+            # display a yellow cross over the dot
+            draw = ImageDraw.Draw(self.current_image)
+            draw.line([(p0, p1), (p2, p3)], fill="yellow")
+            draw.line([(p2, p1), (p0, p3)], fill="yellow")
 
-    #     self.img.paste(self.current_image)
+        self.img.paste(self.current_image)
+
+    def output_crosses(self, dots, threshold):
+        # blank the image
+        self.current_image = Image.fromarray(self.select_channel(self.imgArray))
+        #self.img.paste(self.current_image)
+        count = 0
+
+        # iterate over the dots
+        for dot in dots:
+            # display only dots with probability larger than threshold
+            if dot.probability < threshold:
+                continue
+
+            x, y = dot.x, dot.y
+            count = count+1
+            print "Cell ", count, ": ", "[", x, ", ", y, "]. "
 
     # method used by Refiner to display current point on the image
-    # def display_point(self, point, index):
-    #     self.imgArray = self.get_image_from_idx(index)
-    #     self.current_image = Image.fromarray(self.imgArray)
-    #     self.img.paste(self.current_image)
+    def display_point(self, point, index):
+        self.imgArray = self.get_image_from_idx(index)
+        self.current_image = Image.fromarray(self.imgArray)
+        self.img.paste(self.current_image)
 
-    #     # updates current index info
-    #     self.current_idx = index
-    #     self.current_idx_entry.delete(0, END)
-    #     self.current_idx_entry.insert(END, self.current_idx)
+        # updates current index info
+        self.current_idx = index
+        self.current_idx_entry.delete(0, END)
+        self.current_idx_entry.insert(END, self.current_idx)
 
-    #     p0, p1, p2, p3 = get_coordinates(point[1], point[0], self.settings.get_patch_size())
-    #     draw = ImageDraw.Draw(self.current_image)
-    #     draw.rectangle([(p0, p1), (p2, p3)], outline="white")
-    #     self.img.paste(self.current_image)
+        p0, p1, p2, p3 = get_coordinates(point[1], point[0], self.settings.get_patch_size())
+        draw = ImageDraw.Draw(self.current_image)
+        draw.rectangle([(p0, p1), (p2, p3)], outline="white")
+        self.img.paste(self.current_image)
 
     # method used by Refiner to update the datasets
     def update_datasets(self, pos_dataset, neg_dataset):
@@ -558,11 +603,11 @@ class SmartAnnotator(object):
         image_path = self.folder_path + "/frame_" + str(idx).zfill(4) + ".png"
         image = misc.imread(image_path)
 
-        return image
+        return image 
 
     def select_channel(self, image_array):
         copy_img_array = image_array.copy()
-        type_cb = self.combobox_value.get()
+        type_cb = self.combobox_value
         if type_cb == 'RGB':
             return copy_img_array
         if type_cb == 'ch1':
@@ -751,6 +796,9 @@ if __name__ == '__main__':
         print "Where sequence_folder is the path of the folder containing the frames"
         exit(-1)
 
-    sa = SmartAnnotator(sys.argv[1], int(sys.argv[2]), int(sys.argv[3]))
+    #sa = SmartAnnotator(sys.argv[1], int(sys.argv[2]), int(sys.argv[3]))
     #sa = SmartAnnotator("01corrected", 1209, 2)
     #sa = SmartAnnotator("02corrected", 327, 3)
+    print "TESTTTT"
+    # sa.train_command()
+    # sa.test_command()

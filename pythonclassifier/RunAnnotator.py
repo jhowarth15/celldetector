@@ -1,24 +1,12 @@
 import SmartAnnotator as Sa
-from bottle import request, route, run, template
-import json
 
-@route('/', method='POST')
-def train():
-
-# if __name__ == '__main__':
-
-	data = request.json
-	# data = '["foo", {"bar":["baz", null, 1.0, 2]}]'
-
-	print data[0]["pos"]
+if __name__ == '__main__':
 
 	sa = Sa.SmartAnnotator("png_rgb", 10, 2)
 
 	print "TESTTTT"
 	sa.train_command()
 	sa.test_command()
-
-	detections = []
 
 	count = 0
 	# iterate over the dots
@@ -30,11 +18,5 @@ def train():
 		x, y = dot.x, dot.y
 		count = count+1
 		print "Cell ", count, ": ", "[", x, ", ", y, "]. "
-		detections.append([x,y])
 
-	print "SECONDS"
-
-	return json.dumps(detections)
-
-
-run(host='localhost', port=8080, debug=True)
+print "SECONDS"
