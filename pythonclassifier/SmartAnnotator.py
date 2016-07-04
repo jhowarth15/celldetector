@@ -302,12 +302,12 @@ class SmartAnnotator(object):
         self.res_minus = None
 
         #ADD ANNOTATIONS//////////////////////////////////////////////////////////////////
-        self.add_positive_sample(122,122)#fiji(147, 174)
-        self.add_positive_sample(445, 308)#fiji(450, 354)
-        self.add_positive_sample(241,292)#fiji(244, 345)
+        # self.add_positive_sample(122,122)#fiji(147, 174) -25, -52
+        # self.add_positive_sample(445, 308)#fiji(450, 354) -5, -46
+        # self.add_positive_sample(241,292)#fiji(244, 345) -3, -53
 
-        self.add_negative_sample(20, 20)
-        self.add_negative_sample(20, 60)
+        # self.add_negative_sample(20, 20)
+        # self.add_negative_sample(20, 60)
 
 
         #/////////////////////////////////////////////////////////////////////////////////

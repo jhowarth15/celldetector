@@ -24,7 +24,7 @@ while True:
     frame_count = len([name for name in os.listdir(DIR) if os.path.isfile(os.path.join(DIR, name))])
     print frame_count
 
-    with open('/Users/joshuahowarth/dev/celldetector/pythonclassifier/uploaded_images/image_%d.png' % frame_count, 'wb') as f:
+    with open('/Users/joshuahowarth/dev/celldetector/pythonclassifier/uploaded_images/frame_%s.png' % str(frame_count).zfill(4), 'wb') as f:
         while size > 0:
             data = client.recv(1024)
             f.write(data)
