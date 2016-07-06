@@ -562,7 +562,7 @@ class SmartAnnotator(object):
 
             x, y = dot.x, dot.y
             count = count+1
-            print "Cell ", count, ": ", "[", x, ", ", y, "]. "
+            print "Cell ", count, ": ", "[", x, ", ", y, "], P: ", dot.probability
 
     # method used by Refiner to display current point on the image
     def display_point(self, point, index):

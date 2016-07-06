@@ -18,21 +18,22 @@ def train():
 	# add positive sample points
 	for i in range (0, len(data[0]["pos"])):
 		x_point = data[0]["pos"][i][1:4]
-		print x_point,","
+		# print x_point,","
 		y_point = data[0]["pos"][i][6:9]
-		print y_point
+		# print y_point
 		sa.add_positive_sample(int(x_point),int(y_point))
 
 	print "___"
 	print data[1]
 
+
 	# add negative sample points
 	print len(data[1]["neg"])
 	for j in range (0, len(data[1]["neg"])):
 		x_point = data[1]["neg"][j][1:4]
-		print x_point,","
+		# print x_point,","
 		y_point = data[1]["neg"][j][6:9]
-		print y_point
+		# print y_point
 		sa.add_negative_sample(int(x_point),int(y_point))
 
 
@@ -42,17 +43,18 @@ def train():
 
 	detections = []
 
+
 	count = 0
 	# iterate over the dots
 	for dot in sa.dots:
         # display only dots with probability larger than threshold
-		if dot.probability < sa.slider:
-			continue
+		# if dot.probability < sa.slider:
+		# 	continue
 
-		x, y = dot.x, dot.y
+		x, y, p = dot.x, dot.y, int(dot.probability*100)
 		count = count+1
-		print "Cell ", count, ": ", "[", x, ", ", y, "]. "
-		detections.append([x,y])
+		print "Cell ", count, ": ", "[", x, ", ", y, "], P: ", dot.probability
+		detections.append([x,y,p])
 
 	print "SECONDS"
 
