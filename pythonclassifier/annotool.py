@@ -1,6 +1,7 @@
 import SmartAnnotator as Sa
 from bottle import request, route, run, template
 import json
+import os, os.path, shutil
 
 @route('/', method='POST')
 def train():
@@ -56,8 +57,20 @@ def train():
 		print "Cell ", count, ": ", "[", x, ", ", y, "], P: ", dot.probability
 		detections.append([x,y,p])
 
-	print "SECONDS"
+	# delete all the pngs
+	print "DELETING SAVED PNGS.."
+	folder = '/Users/joshuahowarth/dev/celldetector/pythonclassifier/uploaded_images/'
+	for the_file in os.listdir(folder):
+		file_path = os.path.join(folder, the_file)
+		try:
+			if os.path.isfile(file_path):
+				os.unlink(file_path)
+				#elif os.path.isdir(file_path): shutil.rmtree(file_path)
+		except Exception as e:
+			print(e)	
+	print 'DONE.'
 
+	# return the detections
 	return json.dumps(detections)
 
 

@@ -22,14 +22,14 @@ while True:
 
     DIR = os.getcwd()+'/uploaded_images/'
     frame_count = len([name for name in os.listdir(DIR) if os.path.isfile(os.path.join(DIR, name))])
-    print frame_count
+    # print frame_count
 
     with open('/Users/joshuahowarth/dev/celldetector/pythonclassifier/uploaded_images/frame_%s.png' % str(frame_count).zfill(4), 'wb') as f:
         while size > 0:
             data = client.recv(1024)
             f.write(data)
             size -= len(data)
-    print('Image Saved')
+    # print('Image Saved')
     client.sendall('Image Received')
     client.close()
 
