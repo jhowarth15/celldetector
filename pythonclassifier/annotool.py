@@ -12,8 +12,11 @@ def train():
 	data = request.json
 	# data = '["foo", {"bar":["baz", null, 1.0, 2]}]'
 
+	nChannels = data[2]["settings"][0]
+	print "No Channels: ", nChannels
+
 	# intitiate SmartAnnotator
-	sa = Sa.SmartAnnotator("uploaded_images", 10, 2)
+	sa = Sa.SmartAnnotator("uploaded_images", 10, nChannels)
 
 	print data[0]
 	# add positive sample points
