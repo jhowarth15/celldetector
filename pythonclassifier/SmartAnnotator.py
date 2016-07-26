@@ -333,35 +333,41 @@ class SmartAnnotator(object):
 
     def test_command(self, nframe):
         self.current_idx = nframe
+        self.idx = nframe
+        self.img_array = self.get_image_from_idx(nframe)
+        self.image_feature.update_features(self.imgArray, self.current_idx, True)
 
-        # if already tested show the dots and abort
-        self.dots = self.already_tested[self.current_idx]
-        if len(self.dots) > 0:
-            self.output_crosses(dots, self.slider)
-            return
+        # # if already tested show the dots and abort
+        # self.dots = self.already_tested[self.current_idx]
+        # if len(self.dots) > 0:
+        #     self.output_crosses(dots, self.slider)
+        #     return
 
-        # check if features have been updated
-        if not self.updated:
-            # update the features
-            self.image_feature.update_features(self.imgArray, self.current_idx, True)
-            self.updated = True
+        # # check if features have been updated
+        # if not self.updated:
+        #     # update the features
+        #     self.image_feature.update_features(self.imgArray, self.current_idx, True)
+        #     self.updated = True
 
-        if len(self.positive_dataset) == 0:
-            self.pos_points = utils.shuffle((np.load('annot_al.npy')[50]), random_state=0)
-            self.neg_points = utils.shuffle((np.load('neg_annot_al.npy')[50]), random_state=0)
+        # if len(self.positive_dataset) == 0:
+        #     self.pos_points = utils.shuffle((np.load('annot_al.npy')[50]), random_state=0)
+        #     self.neg_points = utils.shuffle((np.load('neg_annot_al.npy')[50]), random_state=0)
 
-            for i in range(10):
-                p_point = self.pos_points[i]
-                n_point = self.neg_points[i]
-                feats = self.image_feature.extractFeatsFromPoint(p_point, self.settings.get_selection_mask())
-                self.positive_dataset.append(feats)
-                # get features from point and append it to negative dataset
-                feats = self.image_feature.extractFeatsFromPoint(n_point, self.settings.get_selection_mask())
-                self.negative_dataset.append(feats)
+        #     for i in range(10):
+        #         p_point = self.pos_points[i]
+        #         n_point = self.neg_points[i]
+        #         feats = self.image_feature.extractFeatsFromPoint(p_point, self.settings.get_selection_mask())
+        #         self.positive_dataset.append(feats)
+        #         # get features from point and append it to negative dataset
+        #         feats = self.image_feature.extractFeatsFromPoint(n_point, self.settings.get_selection_mask())
+        #         self.negative_dataset.append(feats)
 
-            self.train_command()
+        #     self.train_command()
+
 
         # test the frame
+        
+
         index, self.dots, self.probabilities, dictionary = test_frame(self.current_idx, self.imgArray,
                                                                  self.image_feature, True, self.settings.get_mser_opts(), self.clf,
                                                                  self.settings.get_selection_mask(),
