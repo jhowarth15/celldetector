@@ -12,11 +12,20 @@ def train():
 	data = request.json
 	# data = '["foo", {"bar":["baz", null, 1.0, 2]}]'
 
+	# number of channels
 	nChannels = data[2]["settings"][0]
 	print "No Channels: ", nChannels
 
+	# frame in question
+	nframe = data[2]["settings"][1]
+	print "Frame: ", nframe
+
+	# number of frames
+	frameCount = data[2]["settings"][2]
+	print "No Frames: ", frameCount
+
 	# intitiate SmartAnnotator
-	sa = Sa.SmartAnnotator("uploaded_images", 10, nChannels)
+	sa = Sa.SmartAnnotator("uploaded_images", frameCount, nChannels)
 
 	print data[0]
 	# add positive sample points
@@ -43,7 +52,8 @@ def train():
 
 	print "TESTTTT"
 	sa.train_command()
-	sa.test_command()
+	sa.test_command(nframe)
+	# sa._test_n_frame(nframe)
 
 	detections = []
 

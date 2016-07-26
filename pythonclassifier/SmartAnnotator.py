@@ -331,7 +331,9 @@ class SmartAnnotator(object):
 
 
 
-    def test_command(self):
+    def test_command(self, nframe):
+        self.current_idx = nframe
+
         # if already tested show the dots and abort
         self.dots = self.already_tested[self.current_idx]
         if len(self.dots) > 0:
@@ -380,6 +382,20 @@ class SmartAnnotator(object):
         # self._test_next_frame()
         # self._test_previous_frame()
 
+    def _test_n_frame(self, nframe):
+        index = nframe
+
+        if index == self.num_frames + 1:
+            return
+
+        # check if not been tested before and not retrained
+        self.dots = self.already_tested[index]
+        if len(self.dots) == 0:
+            image_array = self.get_image_from_idx(index)
+            self.res_plus = self.pool.apply_async(test_frame, args=(index, image_array,
+                                                                    self.image_feature, True, self.settings.get_mser_opts(), self.clf,
+                                                                    self.settings.get_selection_mask(),
+                                                                    self.settings.get_dots_distance()))
 
     def _test_next_frame(self):
         index = self.current_idx + 1
