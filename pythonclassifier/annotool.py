@@ -60,8 +60,9 @@ def test():
 	nframe = int(data)
 	print "Frame: ", nframe
 
-	sa.test_command(nframe)
-	# sa._test_n_frame(nframe)
+	# sa.test_command(nframe)
+
+	sa._test_n_frame(nframe)
 
 	detections = []
 

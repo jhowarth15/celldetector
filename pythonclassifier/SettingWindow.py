@@ -25,6 +25,8 @@ class SettingWindow(object):
         # self.notebook.add(frame_mser, text=" MSER  ")
         # self.notebook.add(frame_other, text=" Other  ")
 
+        self.num_frames = num_frames
+
         self.max_num_feats = max_num_features
         self.selection = None
 
@@ -272,7 +274,7 @@ class SettingWindow(object):
 
     def get_num_frames_tracks(self):
         #num_frames_tracks = self.num_frames_tracks_spinbox.get()
-        return num_frames #int(num_frames_tracks)
+        return self.num_frames #int(num_frames_tracks)
 
     def get_mser_opts(self):
         return [2, 10, 350] #[self.delta_scale.get(), self.min_area_scale.get(), self.max_area_scale.get()]

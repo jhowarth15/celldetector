@@ -159,14 +159,7 @@ class SmartAnnotator(object):
 
         # self.root.mainloop()
 
-
-
-
-
-
-
-
-    def add_positive_sample(self, xp, yp):
+    def add_positive_sample(self, xp, yp): #add frame index param /////////////////////////// +negs
         #COMPENSATE FOR FIJI COORD DIFFERENCE - figure out more accurately
         xp = xp# - 15
         yp = yp# - 50
@@ -332,10 +325,19 @@ class SmartAnnotator(object):
 
 
     def test_command(self, nframe):
+        # self.pool.close()
+
         self.current_idx = nframe
-        self.idx = nframe
-        self.img_array = self.get_image_from_idx(nframe)
-        self.image_feature.update_features(self.imgArray, self.current_idx, True)
+        print 'Look here: ', nframe
+
+        # self.idx = nframe
+        # self.img_array = self.get_image_from_idx(nframe)
+        # self.current_image = Image.fromarray(self.imgArray)
+        # self.image_feature = If.ImageFeature(self.settings.get_patch_size())
+        # self.image_feature.update_features(self.imgArray, self.current_idx, True)
+        # self.updated = True
+
+        # self.root.destroy()
 
         # # if already tested show the dots and abort
         # self.dots = self.already_tested[self.current_idx]
@@ -369,9 +371,12 @@ class SmartAnnotator(object):
         
 
         index, self.dots, self.probabilities, dictionary = test_frame(self.current_idx, self.imgArray,
-                                                                 self.image_feature, True, self.settings.get_mser_opts(), self.clf,
+                                                                 self.image_feature, False, self.settings.get_mser_opts(), self.clf,
                                                                  self.settings.get_selection_mask(),
                                                                  self.settings.get_dots_distance())
+
+        # _, dots, _, _ = test_frame(i, img_array, self.image_feature, False, mser, self.clf, features_mask, min_dot_dist)
+
         self.image_feature.merge_dictionaries(dictionary)
 
         # save the dots
@@ -391,17 +396,33 @@ class SmartAnnotator(object):
     def _test_n_frame(self, nframe):
         index = nframe
 
-        if index == self.num_frames + 1:
-            return
+        self.pool.close()
 
-        # check if not been tested before and not retrained
-        self.dots = self.already_tested[index]
-        if len(self.dots) == 0:
-            image_array = self.get_image_from_idx(index)
-            self.res_plus = self.pool.apply_async(test_frame, args=(index, image_array,
-                                                                    self.image_feature, True, self.settings.get_mser_opts(), self.clf,
-                                                                    self.settings.get_selection_mask(),
-                                                                    self.settings.get_dots_distance()))
+        print '-'*10
+        print "Start training, testing and tracking process..."
+
+        num_frames_tracks = self.settings.get_num_frames_tracks()
+
+        image_feature = self.image_feature
+        features_mask = self.settings.get_selection_mask()
+
+
+        mser = self.settings.get_mser_opts()
+        print "MSER. Delta: %d" % mser[0]
+        print "MSER. Min Area: %d" % mser[1]
+        print "MSER. Max Area: %d" % mser[2]
+
+        gaps = 2#int(self.settings.gaps_scale.get())
+
+        min_dot_dist = self.settings.get_dots_distance()
+        print "Minimum distance between detected points: %d" % min_dot_dist
+
+        # self.root.destroy()
+        print '-'*10
+        
+        img_array = self.get_image_from_idx(nframe)
+        index, self.dots, self.probabilities, dictionary = test_frame(nframe, img_array, self.image_feature, False, mser, self.clf, features_mask, min_dot_dist)
+
 
     def _test_next_frame(self):
         index = self.current_idx + 1
@@ -740,7 +761,7 @@ class SmartAnnotator(object):
 def test_frame(idx, image_array, image_feature, memory_opt, mser_opts, classifier, features_mask, min_dot_distance):
     image_feature.update_features(image_array, idx, memory_opt)
 
-    # get candidate points in the image from MSER
+    # get candidate points fidxfin the image from MSER
     red_channel = image_array[:, :, 0]
     red_channel = cv2.equalizeHist(red_channel)  # equalizes the histogram
 
