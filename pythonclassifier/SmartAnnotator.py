@@ -399,7 +399,7 @@ class SmartAnnotator(object):
         self.pool.close()
 
         print '-'*10
-        print "Start training, testing and tracking process..."
+        print "_"*5, " Test frame: ", nframe, "_"*5
 
         num_frames_tracks = self.settings.get_num_frames_tracks()
 
@@ -408,17 +408,17 @@ class SmartAnnotator(object):
 
 
         mser = self.settings.get_mser_opts()
-        print "MSER. Delta: %d" % mser[0]
-        print "MSER. Min Area: %d" % mser[1]
-        print "MSER. Max Area: %d" % mser[2]
+        # print "MSER. Delta: %d" % mser[0]
+        # print "MSER. Min Area: %d" % mser[1]
+        # print "MSER. Max Area: %d" % mser[2]
 
         gaps = 2#int(self.settings.gaps_scale.get())
 
         min_dot_dist = self.settings.get_dots_distance()
-        print "Minimum distance between detected points: %d" % min_dot_dist
+        # print "Minimum distance between detected points: %d" % min_dot_dist
 
         # self.root.destroy()
-        print '-'*10
+        # print '-'*10
         
         img_array = self.get_image_from_idx(nframe)
         index, self.dots, self.probabilities, dictionary = test_frame(nframe, img_array, self.image_feature, False, mser, self.clf, features_mask, min_dot_dist)
