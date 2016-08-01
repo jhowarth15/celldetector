@@ -159,10 +159,16 @@ class SmartAnnotator(object):
 
         # self.root.mainloop()
 
-    def add_positive_sample(self, xp, yp): #add frame index param /////////////////////////// +negs
+    def add_positive_sample(self, xp, yp, frame): #add frame index param /////////////////////////// +negs
         #COMPENSATE FOR FIJI COORD DIFFERENCE - figure out more accurately
         xp = xp# - 15
         yp = yp# - 50
+
+        self.current_idx = frame
+        self.imgArray = self.get_image_from_idx(self.current_idx)
+        self.current_image = Image.fromarray(self.imgArray)
+
+        print "variables::", xp, yp, frame
 
         # if in overlay mode discard
         # if self.overlay_button.get():
@@ -175,11 +181,12 @@ class SmartAnnotator(object):
         x, y = self.get_center_of_mass(xp, yp, self.settings.get_patch_size())
 
         # check if features have been updated
-        if not self.updated:
-            # update the features
-            self.image_feature.update_features(self.imgArray, self.current_idx, True)
-            self.updated = True
+        # if not self.updated:
+        #     # update the features
+        #     self.image_feature.update_features(self.imgArray, frame, True)
+        #     self.updated = True
 
+        self.image_feature.update_features(self.imgArray, self.current_idx, True)
         # get features from point and append it to positive dataset
         feats = self.image_feature.extractFeatsFromPoint((y, x), self.settings.get_selection_mask())
         self.positive_dataset.append(feats)
@@ -200,19 +207,24 @@ class SmartAnnotator(object):
     def add_negative_sample_event(self, x, y):
         self.add_negative_sample(x, y)
 
-    def add_negative_sample(self, x, y):
+    def add_negative_sample(self, x, y, frame):
         # disable feature tab in setting window
         # self.settings.notebook.tab(0, state='disabled')
+
+        self.current_idx = frame
+        self.imgArray = self.get_image_from_idx(self.current_idx)
+        self.current_image = Image.fromarray(self.imgArray)
 
         # calculate patch coordinates
         patch = get_patch_coordinates(x, y, self.settings.get_patch_size())
 
         # check if features have been updated
-        if not self.updated:
-            # update the features
-            self.image_feature.update_features(self.imgArray, self.current_idx, True)
-            self.updated = True
+        # if not self.updated:
+        #     # update the features
+        #     self.image_feature.update_features(self.imgArray, self.current_idx, True)
+        #     self.updated = True
 
+        self.image_feature.update_features(frame, self.current_idx, True)
         # get around 10 points per patch
         points = patch[1:-1:50]
         for point in points:
@@ -294,17 +306,6 @@ class SmartAnnotator(object):
         self.res_plus = None
         self.res_minus = None
 
-        #ADD ANNOTATIONS//////////////////////////////////////////////////////////////////
-        # self.add_positive_sample(122,122)#fiji(147, 174) -25, -52
-        # self.add_positive_sample(445, 308)#fiji(450, 354) -5, -46
-        # self.add_positive_sample(241,292)#fiji(244, 345) -3, -53
-
-        # self.add_negative_sample(20, 20)
-        # self.add_negative_sample(20, 60)
-
-
-        #/////////////////////////////////////////////////////////////////////////////////
-
         # merge the two datasets and create X and y
         X, y = merge_datasets(self.positive_dataset, self.negative_dataset)
 
@@ -321,6 +322,8 @@ class SmartAnnotator(object):
 
         print "Model trained. Feature importances:"
         print(self.clf.feature_importances_)
+
+
 
 
 

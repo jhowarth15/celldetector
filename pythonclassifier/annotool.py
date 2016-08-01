@@ -31,7 +31,9 @@ def train():
 		# print x_point,","
 		y_point = data[0]["pos"][i][6:9]
 		# print y_point
-		sa.add_positive_sample(int(x_point),int(y_point))
+		point_frame = data[0]["pos"][i][11:15]
+		print point_frame
+		sa.add_positive_sample(int(x_point),int(y_point),int(point_frame))
 
 	print "___"
 	print data[1]
@@ -44,7 +46,9 @@ def train():
 		# print x_point,","
 		y_point = data[1]["neg"][j][6:9]
 		# print y_point
-		sa.add_negative_sample(int(x_point),int(y_point))
+		point_frame = data[0]["pos"][i][11:15]
+		print point_frame
+		sa.add_negative_sample(int(x_point),int(y_point),int(point_frame))
 
 	sa.train_command()
 
