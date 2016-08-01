@@ -21,7 +21,14 @@ def train():
 	print "No Frames: ", frameCount
 
 	# intitiate SmartAnnotator
-	global sa 
+	try:
+		sa
+		del sa
+		print "RETRAIN"
+	except NameError:
+		print 'FIRST TRAINING'
+
+	global sa
 	sa = Sa.SmartAnnotator("uploaded_images", frameCount, nChannels)
 
 	print data[0]
