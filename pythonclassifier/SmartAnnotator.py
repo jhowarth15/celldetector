@@ -20,6 +20,7 @@ import Plotter3D as P3D
 import time
 import datetime
 import sys
+import math
 
 MAX_NUM_FEATURES = 24
 
@@ -40,6 +41,10 @@ class SmartAnnotator(object):
         # initialize the two lists positive and negative dataset
         self.positive_dataset = list()
         self.negative_dataset = list()
+
+        # initialize list for distances to nearest cell for negative annotations
+        self.negative_distances = list()
+        self.positive_annots = list() # to calculate negatives distances against
 
         # initialize the occupied grid
         self.occupied_grid = np.zeros((512, 512), dtype='bool')
@@ -159,10 +164,7 @@ class SmartAnnotator(object):
 
         # self.root.mainloop()
 
-    def add_positive_sample(self, xp, yp, frame): #add frame index param /////////////////////////// +negs
-        #COMPENSATE FOR FIJI COORD DIFFERENCE - figure out more accurately
-        xp = xp# - 15
-        yp = yp# - 50
+    def add_positive_sample(self, xp, yp, frame):
 
         self.current_idx = frame
         self.imgArray = self.get_image_from_idx(self.current_idx)
@@ -179,6 +181,9 @@ class SmartAnnotator(object):
 
         # calculate the center of mass
         x, y = self.get_center_of_mass(xp, yp, self.settings.get_patch_size())
+
+        # add to the pos annots list for distance calcs
+        self.positive_annots.append([x,y])
 
         # check if features have been updated
         # if not self.updated:
@@ -217,6 +222,8 @@ class SmartAnnotator(object):
 
         # calculate patch coordinates
         patch = get_patch_coordinates(x, y, self.settings.get_patch_size())
+        #print "Patch: ", patch
+
 
         # check if features have been updated
         # if not self.updated:
@@ -234,6 +241,21 @@ class SmartAnnotator(object):
             print '[%s]' % ', '.join(map(str, feats))
             #print "Here: ", feats[0]
             self.negative_dataset.append(feats)
+
+            print "XXX:", point[1], "YYY:", point[0]
+
+            distance = 500
+            #insert distance to nearest cell for later
+            for pos in self.positive_annots:
+                xdiff = pos[0] - point[0]
+                ydiff = pos[1] - point[1]
+                alength = math.sqrt(math.pow(xdiff,2) + math.pow(ydiff,2))
+                print "###", alength
+                if (alength < distance):
+                    distance = alength
+            
+            self.negative_distances.append(distance)
+            
 
         # draw blue rectangle
         # draw = ImageDraw.Draw(self.current_image)
@@ -296,6 +318,10 @@ class SmartAnnotator(object):
     #     if len(dots) > 0:
     #         self.show_crosses(dots, self.slider.get())
 
+
+    #for regression, make new merge function using distances instead of binary classifier values
+    #run ensemble.RandomForestRegressor in a new train_command fn
+    #then in a new test frame fn, process the predicted values, flagging zeros as cells
     def train_command(self):
         # remove previously founded dots
         self.already_tested = [[] for i in range(self.num_frames + 1)]
@@ -307,12 +333,12 @@ class SmartAnnotator(object):
         self.res_minus = None
 
         # merge the two datasets and create X and y
-        X, y = merge_datasets(self.positive_dataset, self.negative_dataset)
+        X, y = regression_merge_datasets(self.positive_dataset, self.negative_dataset, self.negative_distances)
 
         # updates the classifier object using the forest opts specified in the setting window
         # disable corresponding frame
         forest_opts = self.settings.get_forest_opts()
-        self.clf = ensemble.RandomForestClassifier(forest_opts[0], max_depth=forest_opts[1], max_features=forest_opts[2])
+        self.clf = ensemble.RandomForestRegressor(forest_opts[0], max_depth=forest_opts[1], max_features=forest_opts[2])
         # self.settings.notebook.tab(1, state='disabled')
 
         print(self.clf)
@@ -322,9 +348,6 @@ class SmartAnnotator(object):
 
         print "Model trained. Feature importances:"
         print(self.clf.feature_importances_)
-
-
-
 
 
     def test_command(self, nframe):
@@ -809,7 +832,7 @@ def test_frame(idx, image_array, image_feature, memory_opt, mser_opts, classifie
 
 
 def merge_datasets(positive_dataset, negative_dataset):
-    positive_dataset = np.array(positive_dataset)
+    positive_dataset = np.array(positive_dataset)#these are the extracted features from the pos points
     negative_dataset = np.array(negative_dataset)
 
     num_pos_samples = positive_dataset.shape[0]
@@ -818,8 +841,26 @@ def merge_datasets(positive_dataset, negative_dataset):
     X = np.concatenate((positive_dataset, negative_dataset))
     y = np.concatenate((np.ones((num_pos_samples,)), np.zeros((num_neg_samples,))))
 
+    print "LOOKY HERE:::", num_pos_samples, num_neg_samples
+    print y
+
     return X, y
 
+def regression_merge_datasets(positive_dataset, negative_dataset, negative_distances):
+    positive_dataset = np.array(positive_dataset)#these are the extracted features from the pos points
+    negative_dataset = np.array(negative_dataset)
+
+    num_pos_samples = positive_dataset.shape[0]
+    num_neg_samples = negative_dataset.shape[0]
+
+    X = np.concatenate((positive_dataset, negative_dataset))
+    #linear distance to nearest cell instead?? will be zero for positives
+    y = np.concatenate((np.zeros((num_pos_samples,)), negative_distances))
+
+    print "LOOKY HERE:::", num_pos_samples, num_neg_samples
+    print y
+
+    return X, y
 
 def get_patch_coordinates(x, y, offset):
     patchXliminf = max(0, x - offset)

@@ -42,7 +42,7 @@ def train():
 		print point_frame
 		sa.add_positive_sample(int(x_point),int(y_point),int(point_frame))
 
-	print "___"
+	print "_"*10
 	print data[1]
 
 
