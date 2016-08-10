@@ -321,10 +321,6 @@ class SmartAnnotator(object):
     #     if len(dots) > 0:
     #         self.show_crosses(dots, self.slider.get())
 
-
-    #for regression, make new merge function using distances instead of binary classifier values
-    #run ensemble.RandomForestRegressor in a new train_command fn
-    #then in a new test frame fn, process the predicted values, flagging zeros as cells
     def train_command(self):
         # remove previously founded dots
         self.already_tested = [[] for i in range(self.num_frames + 1)]
@@ -461,7 +457,11 @@ class SmartAnnotator(object):
         # print '-'*10
         
         img_array = self.get_image_from_idx(nframe)
-        index, self.dots, self.probabilities, dictionary = test_frame(nframe, img_array, self.image_feature, False, mser, self.clf, features_mask, min_dot_dist)
+
+        if (self.classifierSet==True):
+            index, self.dots, self.probabilities, dictionary = test_frame(nframe, img_array, self.image_feature, False, mser, self.clf, features_mask, min_dot_dist)
+        if (self.classifierSet==False):
+            index, self.dots, self.probabilities, dictionary = regression_test_frame(nframe, img_array, self.image_feature, False, mser, self.clf, features_mask, min_dot_dist)
 
 
     def _test_next_frame(self):
@@ -797,7 +797,6 @@ class SmartAnnotator(object):
         print "End of the program."
         exit(0)
 
-
 def test_frame(idx, image_array, image_feature, memory_opt, mser_opts, classifier, features_mask, min_dot_distance):
     image_feature.update_features(image_array, idx, memory_opt)
 
@@ -842,6 +841,67 @@ def test_frame(idx, image_array, image_feature, memory_opt, mser_opts, classifie
 
     # return the dots and probabilities image
     # it also returns the updated image feature dictionary
+    return idx, dots, probabilities, image_feature.feats_dictionary
+
+#then in a new test frame fn, process the predicted values, flagging zeros as cells
+def regression_test_frame(idx, image_array, image_feature, memory_opt, mser_opts, classifier, features_mask, min_dot_distance):
+    image_feature.update_features(image_array, idx, memory_opt)
+
+    # get candidate points fidxfin the image from MSER
+    red_channel = image_array[:, :, 0]
+    red_channel = cv2.equalizeHist(red_channel)  # equalizes the histogram
+
+    mser = cv2.MSER(mser_opts[0], _min_area=mser_opts[1], _max_area=mser_opts[2])
+    regions = mser.detect(red_channel)
+
+    candidate_points = set()
+    for r in regions:
+        for point in r:
+            candidate_points.add(tuple(point))
+
+    candidate_points = list(candidate_points)
+
+    X = np.zeros((len(candidate_points), sum(features_mask)))
+
+    # for each candidate point, extract the features and build test matrix
+    for i in xrange(len(candidate_points)):
+        cp = candidate_points[i]
+        feats = image_feature.extractFeatsFromPoint((cp[1], cp[0]), features_mask)
+        X[i, :] = feats
+
+    # test the vector
+    predictions = classifier.predict(X)
+    # print "Predictions:: ", predictions
+
+    # regression_targets = np.ones((512, 512))
+
+    dots = list()
+    index = 0
+    for i in candidate_points:
+        
+        if (predictions[index] < 50):
+            dots.append(Dd.Dot(int(i[0]), int(i[1]), 0.1))
+            print predictions[index]
+        index += 1
+
+    
+    # for x in range(0,512):
+    #     for y in range(0,512):
+    #         target = regression_targets[y, x]
+    #         print x, ",", y, ",", target, ","
+    #         # if (target < 1):
+            #     dots.append(Dd.Dot(x, y, 0.1))
+
+    # dot detector
+    # dd = Dd.DotDetect(probabilities)
+    # dots = dd.detect_dots(min_dot_distance)
+    # del(dd, mser)
+
+    print("Frame " + str(idx) + " has been tested.")
+
+    # return the dots and probabilities image
+    # it also returns the updated image feature dictionary
+    probabilities = None
     return idx, dots, probabilities, image_feature.feats_dictionary
 
 
