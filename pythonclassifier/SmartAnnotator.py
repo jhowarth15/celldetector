@@ -257,6 +257,7 @@ class SmartAnnotator(object):
                 if (alength < distance):
                     distance = alength
             
+            print distance
             self.negative_distances.append(distance)
             
 
@@ -873,29 +874,20 @@ def regression_test_frame(idx, image_array, image_feature, memory_opt, mser_opts
     predictions = classifier.predict(X)
     # print "Predictions:: ", predictions
 
-    # regression_targets = np.ones((512, 512))
-
     dots = list()
     index = 0
-    for i in candidate_points:
-        
-        if (predictions[index] < 50):
-            dots.append(Dd.Dot(int(i[0]), int(i[1]), 0.1))
-            print predictions[index]
+    for i in candidate_points:  
+
+        threshold_value = 100
+        if (predictions[index] < threshold_value):
+
+            #convert prediction value into probabilty score map
+            alpha = 1
+            proximity_score = math.exp(alpha*(1-(predictions[index]/threshold_value))) - 1
+            print proximity_score
+
+            dots.append(Dd.Dot(int(i[0]), int(i[1]), proximity_score))
         index += 1
-
-    
-    # for x in range(0,512):
-    #     for y in range(0,512):
-    #         target = regression_targets[y, x]
-    #         print x, ",", y, ",", target, ","
-    #         # if (target < 1):
-            #     dots.append(Dd.Dot(x, y, 0.1))
-
-    # dot detector
-    # dd = Dd.DotDetect(probabilities)
-    # dots = dd.detect_dots(min_dot_distance)
-    # del(dd, mser)
 
     print("Frame " + str(idx) + " has been tested.")
 
