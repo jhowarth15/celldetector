@@ -20,6 +20,9 @@ def train():
 	frameCount = data[2]["settings"][2]
 	print "No Frames: ", frameCount
 
+	classifierSet = data[2]["settings"][3]
+	print "Classifier Set: ", classifierSet
+
 	# intitiate SmartAnnotator
 	try:
 		sa
@@ -29,7 +32,7 @@ def train():
 		print 'FIRST TRAINING'
 
 	global sa
-	sa = Sa.SmartAnnotator("uploaded_images", frameCount, nChannels)
+	sa = Sa.SmartAnnotator("uploaded_images", frameCount, nChannels, classifierSet)
 
 	print data[0]
 	# add positive sample points

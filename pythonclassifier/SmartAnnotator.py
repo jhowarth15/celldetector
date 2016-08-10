@@ -27,11 +27,14 @@ MAX_NUM_FEATURES = 24
 
 class SmartAnnotator(object):
 
-    def __init__(self, folder_path, num_frames, num_channels):
+    def __init__(self, folder_path, num_frames, num_channels, classifierSet):
         self.dots = None
 
         self.folder_path = folder_path
         self.num_frames = num_frames
+
+        # set whether classifier or regression used
+        self.classifierSet = classifierSet
 
         self.combobox_value = "RGB" #INPUT channel here///////////////////////
 
@@ -170,7 +173,7 @@ class SmartAnnotator(object):
         self.imgArray = self.get_image_from_idx(self.current_idx)
         self.current_image = Image.fromarray(self.imgArray)
 
-        print "variables::", xp, yp, frame
+        # print "variables::", xp, yp, frame
 
         # if in overlay mode discard
         # if self.overlay_button.get():
@@ -242,7 +245,7 @@ class SmartAnnotator(object):
             #print "Here: ", feats[0]
             self.negative_dataset.append(feats)
 
-            print "XXX:", point[1], "YYY:", point[0]
+            # print "X:", point[1], "Y:", point[0]
 
             distance = 500
             #insert distance to nearest cell for later
@@ -250,7 +253,7 @@ class SmartAnnotator(object):
                 xdiff = pos[0] - point[0]
                 ydiff = pos[1] - point[1]
                 alength = math.sqrt(math.pow(xdiff,2) + math.pow(ydiff,2))
-                print "###", alength
+                # print "#", alength
                 if (alength < distance):
                     distance = alength
             
@@ -332,14 +335,25 @@ class SmartAnnotator(object):
         self.res_plus = None
         self.res_minus = None
 
-        # merge the two datasets and create X and y
-        X, y = regression_merge_datasets(self.positive_dataset, self.negative_dataset, self.negative_distances)
+        if (self.classifierSet==True):
+            # merge the two datasets and create X and y
+            X, y = merge_datasets(self.positive_dataset, self.negative_dataset)
 
-        # updates the classifier object using the forest opts specified in the setting window
-        # disable corresponding frame
-        forest_opts = self.settings.get_forest_opts()
-        self.clf = ensemble.RandomForestRegressor(forest_opts[0], max_depth=forest_opts[1], max_features=forest_opts[2])
-        # self.settings.notebook.tab(1, state='disabled')
+            # updates the classifier object using the forest opts specified in the setting window
+            # disable corresponding frame
+            forest_opts = self.settings.get_forest_opts()
+            self.clf = ensemble.RandomForestClassifier(forest_opts[0], max_depth=forest_opts[1], max_features=forest_opts[2])
+            # self.settings.notebook.tab(1, state='disabled')
+
+        if (self.classifierSet==False):
+            # merge the two datasets and create X and y
+            X, y = regression_merge_datasets(self.positive_dataset, self.negative_dataset, self.negative_distances)
+
+            # updates the classifier object using the forest opts specified in the setting window
+            # disable corresponding frame
+            forest_opts = self.settings.get_forest_opts()
+            self.clf = ensemble.RandomForestRegressor(forest_opts[0], max_depth=forest_opts[1], max_features=forest_opts[2])
+            # self.settings.notebook.tab(1, state='disabled')
 
         print(self.clf)
 
@@ -350,74 +364,74 @@ class SmartAnnotator(object):
         print(self.clf.feature_importances_)
 
 
-    def test_command(self, nframe):
-        # self.pool.close()
+    # def test_command(self, nframe):
+    #     # self.pool.close()
 
-        self.current_idx = nframe
-        print 'Look here: ', nframe
+    #     self.current_idx = nframe
+    #     print 'Look here: ', nframe
 
-        # self.idx = nframe
-        # self.img_array = self.get_image_from_idx(nframe)
-        # self.current_image = Image.fromarray(self.imgArray)
-        # self.image_feature = If.ImageFeature(self.settings.get_patch_size())
-        # self.image_feature.update_features(self.imgArray, self.current_idx, True)
-        # self.updated = True
+    #     # self.idx = nframe
+    #     # self.img_array = self.get_image_from_idx(nframe)
+    #     # self.current_image = Image.fromarray(self.imgArray)
+    #     # self.image_feature = If.ImageFeature(self.settings.get_patch_size())
+    #     # self.image_feature.update_features(self.imgArray, self.current_idx, True)
+    #     # self.updated = True
 
-        # self.root.destroy()
+    #     # self.root.destroy()
 
-        # # if already tested show the dots and abort
-        # self.dots = self.already_tested[self.current_idx]
-        # if len(self.dots) > 0:
-        #     self.output_crosses(dots, self.slider)
-        #     return
+    #     # # if already tested show the dots and abort
+    #     # self.dots = self.already_tested[self.current_idx]
+    #     # if len(self.dots) > 0:
+    #     #     self.output_crosses(dots, self.slider)
+    #     #     return
 
-        # # check if features have been updated
-        # if not self.updated:
-        #     # update the features
-        #     self.image_feature.update_features(self.imgArray, self.current_idx, True)
-        #     self.updated = True
+    #     # # check if features have been updated
+    #     # if not self.updated:
+    #     #     # update the features
+    #     #     self.image_feature.update_features(self.imgArray, self.current_idx, True)
+    #     #     self.updated = True
 
-        # if len(self.positive_dataset) == 0:
-        #     self.pos_points = utils.shuffle((np.load('annot_al.npy')[50]), random_state=0)
-        #     self.neg_points = utils.shuffle((np.load('neg_annot_al.npy')[50]), random_state=0)
+    #     # if len(self.positive_dataset) == 0:
+    #     #     self.pos_points = utils.shuffle((np.load('annot_al.npy')[50]), random_state=0)
+    #     #     self.neg_points = utils.shuffle((np.load('neg_annot_al.npy')[50]), random_state=0)
 
-        #     for i in range(10):
-        #         p_point = self.pos_points[i]
-        #         n_point = self.neg_points[i]
-        #         feats = self.image_feature.extractFeatsFromPoint(p_point, self.settings.get_selection_mask())
-        #         self.positive_dataset.append(feats)
-        #         # get features from point and append it to negative dataset
-        #         feats = self.image_feature.extractFeatsFromPoint(n_point, self.settings.get_selection_mask())
-        #         self.negative_dataset.append(feats)
+    #     #     for i in range(10):
+    #     #         p_point = self.pos_points[i]
+    #     #         n_point = self.neg_points[i]
+    #     #         feats = self.image_feature.extractFeatsFromPoint(p_point, self.settings.get_selection_mask())
+    #     #         self.positive_dataset.append(feats)
+    #     #         # get features from point and append it to negative dataset
+    #     #         feats = self.image_feature.extractFeatsFromPoint(n_point, self.settings.get_selection_mask())
+    #     #         self.negative_dataset.append(feats)
 
-        #     self.train_command()
+    #     #     self.train_command()
 
 
-        # test the frame
+    #     # test the frame
         
 
-        index, self.dots, self.probabilities, dictionary = test_frame(self.current_idx, self.imgArray,
-                                                                 self.image_feature, False, self.settings.get_mser_opts(), self.clf,
-                                                                 self.settings.get_selection_mask(),
-                                                                 self.settings.get_dots_distance())
+    #     index, self.dots, self.probabilities, dictionary = test_frame(self.current_idx, self.imgArray,
+    #                                                              self.image_feature, False, self.settings.get_mser_opts(), self.clf,
+    #                                                              self.settings.get_selection_mask(),
+    #                                                              self.settings.get_dots_distance())
 
-        # _, dots, _, _ = test_frame(i, img_array, self.image_feature, False, mser, self.clf, features_mask, min_dot_dist)
+    #     # _, dots, _, _ = test_frame(i, img_array, self.image_feature, False, mser, self.clf, features_mask, min_dot_dist)
 
-        self.image_feature.merge_dictionaries(dictionary)
+    #     self.image_feature.merge_dictionaries(dictionary)
 
-        # save the dots
-        self.already_tested[index] = self.dots
+    #     # save the dots
+    #     self.already_tested[index] = self.dots
 
-        # show the crosses
-        # self.output_crosses(self.dots, self.slider)
-        #self.show_crosses(dots, self.slider)
+    #     # show the crosses
+    #     # self.output_crosses(self.dots, self.slider)
+    #     #self.show_crosses(dots, self.slider)
 
-        # update flag
-        self.has_been_tested = True
+    #     # update flag
+    #     self.has_been_tested = True
 
-        # start async calls to test function for next and previous frame
-        # self._test_next_frame()
-        # self._test_previous_frame()
+    #     # start async calls to test function for next and previous frame
+    #     # self._test_next_frame()
+    #     # self._test_previous_frame()
 
     def _test_n_frame(self, nframe):
         index = nframe
@@ -841,8 +855,8 @@ def merge_datasets(positive_dataset, negative_dataset):
     X = np.concatenate((positive_dataset, negative_dataset))
     y = np.concatenate((np.ones((num_pos_samples,)), np.zeros((num_neg_samples,))))
 
-    print "LOOKY HERE:::", num_pos_samples, num_neg_samples
-    print y
+    # print num_pos_samples, num_neg_samples
+    # print y
 
     return X, y
 
@@ -857,8 +871,8 @@ def regression_merge_datasets(positive_dataset, negative_dataset, negative_dista
     #linear distance to nearest cell instead?? will be zero for positives
     y = np.concatenate((np.zeros((num_pos_samples,)), negative_distances))
 
-    print "LOOKY HERE:::", num_pos_samples, num_neg_samples
-    print y
+    # print num_pos_samples, num_neg_samples
+    # print y
 
     return X, y
 
