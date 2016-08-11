@@ -874,10 +874,10 @@ def regression_test_frame(idx, image_array, image_feature, memory_opt, mser_opts
     predictions = classifier.predict(X)
     # print "Predictions:: ", predictions
 
-    dots = list()
-    index = 0
-    for i in candidate_points:  
+    probabilities = np.zeros((512, 512))
 
+    index = 0
+    for i in candidate_points:
         threshold_value = 100
         if (predictions[index] < threshold_value):
 
@@ -885,15 +885,18 @@ def regression_test_frame(idx, image_array, image_feature, memory_opt, mser_opts
             alpha = 1
             proximity_score = math.exp(alpha*(1-(predictions[index]/threshold_value))) - 1
             print proximity_score
-
-            dots.append(Dd.Dot(int(i[0]), int(i[1]), proximity_score))
+            probabilities[i[1], i[0]] = proximity_score
         index += 1
+
+    # dot detector
+    dd = Dd.DotDetect(probabilities)
+    dots = dd.detect_dots(min_dot_distance)
+    del(dd, mser)
 
     print("Frame " + str(idx) + " has been tested.")
 
     # return the dots and probabilities image
     # it also returns the updated image feature dictionary
-    probabilities = None
     return idx, dots, probabilities, image_feature.feats_dictionary
 
 
